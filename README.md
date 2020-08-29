@@ -139,6 +139,33 @@ DraweeController draweeController = Fresco.newDraweeControllerBuilder()
 sdv_gif.setController(draweeController);
 ```
 
+## 编译错误
+###  Validation failed, exiting
+AndroidManifest.xml
+```xml
+<application
+        android:appComponentFactory="fixError" // 添加，任意字符都行
+        tools:replace="android:appComponentFactory" // 解决属性重复问题
+             >
+            
+```
+
+### Duplicate class android.support.v4.app.INotificationSideChannel found in modules classes.jar
+androidx与support的冲突，必须改成统一
+
+**1.改成androidx**
+
+gradle.properties
+```
+android.useAndroidX=true
+android.enableJetifier=true
+```
+工程 —— Refactor —— Migrate to AndroidX
+
+**2.改成support**
+
+全部改成support，并三方库降低到不含androidx的版本
+
 ## Kotlin
 ### 1. AS引入
 工程build.gradle
