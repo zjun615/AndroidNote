@@ -139,6 +139,102 @@ DraweeController draweeController = Fresco.newDraweeControllerBuilder()
 sdv_gif.setController(draweeController);
 ```
 
+### 回到桌面
+```java
+Intent i = new Intent(Intent.ACTION_MAIN);
+i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+i.addCategory(Intent.CATEGORY_HOME);
+startActivity(i);
+```
+
+### 获取正在运行的进程
+```java
+// 只能获取自己应用
+ActivityManager activityManager = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
+List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+if (appProcesses == null) {
+    tv_msg.setText("NONE");
+}
+for (ActivityManager.RunningAppProcessInfo appProcess : appProcesses) {
+    tv_msg.append("processName=" + appProcess.processName + "\t, importance=" + appProcess.importance + "\n");
+}
+```
+
+```java
+// 只能获取自己和桌面应用
+ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+List<ActivityManager.RunningTaskInfo> infoList = am.getRunningTasks(100);
+for (ActivityManager.RunningTaskInfo info : infoList) {
+    tv_msg.append("base=" + info.baseActivity.getPackageName() + "/" + info.baseActivity.getClassName()
+            + "\ntop=" + info.topActivity.getPackageName() + "/" + info.topActivity.getClassName()
+            + "\n\n");
+}
+```
+
+```java
+UsageStatsManager mUsageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+long time = System.currentTimeMillis();
+// We get usage stats for the last 10 seconds
+List<UsageStats> stats = mUsageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 1000 * 10, time);
+
+// Sort the stats by the last time used
+if (stats != null) {
+    SortedMap< Long, UsageStats > mySortedMap = new TreeMap< Long, UsageStats >();
+    int index = 0;
+    for (UsageStats usageStats: stats) {
+        mySortedMap.put(usageStats.getLastTimeUsed(), usageStats);
+    }
+    for (UsageStats item : mySortedMap.values()) {
+        tv_msg.append(index++ + ".packageName=" + item.getPackageName()
+                + ", getLastTimeUsed=" + formatTime(item.getLastTimeUsed())
+                + ", getFirstTimeStamp=" + formatTime(item.getFirstTimeStamp())
+                + ", getLastTimeVisible=" + formatTime(item.getLastTimeVisible())
+                + ", getTotalTimeInForeground=" + item.getTotalTimeInForeground()
+                + ", getTotalTimeVisible=" + item.getTotalTimeVisible()
+                + "\n\n");
+    }
+}
+```
+
+```java
+UsageStatsManager mUsageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+long time = System.currentTimeMillis();
+// We get usage stats for the last 10 seconds
+UsageEvents usageEvents = mUsageStatsManager.queryEvents(time - 500_000, time);
+index = 0;
+while (usageEvents.hasNextEvent()) {
+    UsageEvents.Event event = new UsageEvents.Event();
+    usageEvents.getNextEvent(event);
+    Log.d("TestActivity", index++ + ".packageName=" + event.getPackageName()
+            + ", getTimeStamp=" + formatTime(event.getTimeStamp())
+            /*
+             1-MOVE_TO_FOREGROUND
+             2-MOVE_TO_BACKGROUND
+             23-ACTIVITY_STOPPED
+             */
+            + ", getEventType=" + event.getEventType()
+            + ", getShortcutId=" + event.getShortcutId()
+            + ", getAppStandbyBucket=" + event.getAppStandbyBucket()
+            + ", getConfiguration=" + event.getConfiguration()
+            + "\n\n");
+}
+```
+
+```java
+PackageManager localPackageManager = getPackageManager();
+List localList = localPackageManager.getInstalledPackages(0);
+for (int i = 0; i < localList.size(); i++) {
+    PackageInfo localPackageInfo1 = (PackageInfo) localList.get(i);
+    String str1 = localPackageInfo1.packageName.split(":")[0];
+    if (((ApplicationInfo.FLAG_SYSTEM & localPackageInfo1.applicationInfo.flags) == 0)
+            && ((ApplicationInfo.FLAG_UPDATED_SYSTEM_APP & localPackageInfo1.applicationInfo.flags) == 0)
+            && ((ApplicationInfo.FLAG_STOPPED & localPackageInfo1.applicationInfo.flags) == 0)) {
+        Log.e("TestActivity",str1);
+    }
+}
+```
+
+
 ## 编译错误
 ###  Validation failed, exiting
 AndroidManifest.xml
