@@ -306,3 +306,76 @@ shape_input_cursor.xml
     android:textCursorDrawable="@drawable/shape_input_cursor"
     ... />
 ```
+## 悬浮窗
+### 1. 需权限
+添加权限SYSTEM_ALERT_WINDOW
+```xml
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+```
+```java
+public class VsipFloatWindow extends FrameLayout {
+    @RequiresPermission(Manifest.permission.SYSTEM_ALERT_WINDOW)
+    public boolean show() {
+        mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+        mLayoutParams = new WindowManager.LayoutParams(width, height,
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O 
+                        ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+        // 设置动画：通过这里设置，必须使用系统自带的动画
+        mLayoutParams.windowAnimations = android.R.style.Animation_Translucent;
+        mWindowManager.addView(this, mLayoutParams);
+    }
+}
+```
+现在，大部分手机都无法申请权限，必须让用户进入手动打开权限
+```java
+private void requestSettingCanDrawOverlays() {
+    boolean canDrawOverlays = false;
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+        canDrawOverlays = Settings.canDrawOverlays(this);
+    }
+    if (!canDrawOverlays) {
+        boolean needAlert = true;
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
+            AppOpsManager appOpsMgr = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+            int mode = appOpsMgr.checkOpNoThrow("android:system_alert_window", android.os.Process.myUid(), getPackageName());
+            if (mode == 0 || mode == 1) {
+                needAlert = false;
+            }
+        }
+        if (needAlert) {
+            // 弹对话框提示用户进入，打开权限
+            int sdkInt = Build.VERSION.SDK_INT;
+            if (sdkInt >= Build.VERSION_CODES.O) {//8.0以上
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+                startActivityForResult(intent, 200);
+            } else if (sdkInt >= Build.VERSION_CODES.M) {//6.0-8.0
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivityForResult(intent, 200);
+            } else {//4.4-6.0以下
+                //无需处理了
+            }
+
+            // 或直接进入本应用的设置详情界面
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            Uri uri = Uri.fromParts("package", getPackageName(), null);
+            intent.setData(uri);
+            startActivity(intent);
+        }
+    }
+}
+```
+### 2. 不需要权限
+#### 方法一：把type改成2037
+```java
+mLayoutParams.type = 2037
+```
+2037被hide了，原来为WindowManager.LayoutParams.TYPE_PRESENTATION
+
+#### 方法二：应用内全局悬浮窗
+添加到Activity的DecorView下的mContentParent中，参考[EasyFloat](https://github.com/shenzhen2017/EasyFloat)
+
+缺点：不能系统全局使用，只能本应用内使用
+ 
