@@ -283,3 +283,25 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 ```
+
+## EditText
+### 光标自定义
+修改颜色、宽度
+通过padding（一般为负值），top和bottom可修改高度，left还可以修改光标与文字的间距。
+shape_input_cursor.xml
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#FF00C853" />
+    <size android:width="2dp" />
+    <padding
+        android:top="-5dp"
+        android:bottom="-5dp" 
+        android:left="-5dp"/>
+</shape>
+```
+```xml
+<EditText
+    android:textCursorDrawable="@drawable/shape_input_cursor"
+    ... />
+```
