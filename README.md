@@ -287,6 +287,7 @@ dependencies {
 ## EditText
 ### 光标自定义
 修改颜色、宽度
+
 通过padding（一般为负值），top和bottom可修改高度，left还可以修改光标与文字的间距。
 shape_input_cursor.xml
 ```xml
